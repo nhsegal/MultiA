@@ -11,7 +11,7 @@ var nodes = [];
 
 
 var potential = 1;
-var nodeNum = 9;
+var nodeNum = 7;
 var initialAction = 1;
 var initialU = 1;
 var initialK = 0;
@@ -21,24 +21,25 @@ var K_;
 var U_;
 var reset;
 var arrow;
-var arrow_x = 100;
-var arrow_y = 250;
+var arrow_x = 950;
+var arrow_y = 200;
 var arrows = [];
 
 var paths = [];
 var pathNumber = 20;
 var arrowEndx;
 var arrowEndy;
+var arrowLen = 5;
 
 
 function setup() {
-  var cnv = createCanvas(800, 400);
+  var cnv = createCanvas(1000, 400);
   cnv.parent("myContainer");
   textSize(16);
   textFont("Consolas");
   textStyle(NORMAL);
 
-  nodeNumSlider = createSlider(3,17,9);
+  nodeNumSlider = createSlider(3,17,7);
   nodeNumSlider.parent("sliderPos");
   nodeNumSlider.size(240);  
   
@@ -61,7 +62,7 @@ function setup() {
       strokeWeight(2);
       line(nodes[i].x, nodes[i].y, nodes[i-1].x, nodes[i-1].y);
       for (var k = 0; k<pathNumber; k++){
-         console.log(paths[k][i].x);
+
         line(paths[k][i].x, paths[k][i].y, paths[k][i-1].x, paths[k][i-1].y);
       }
     }
@@ -71,7 +72,7 @@ function setup() {
   //initialK = calculateK();
   //initialAction = calculateK() - calculateU();  
 
-  arrow = new actionArrow(arrow_x, arrow_y, 3, 20);
+  arrow = new actionArrow(arrow_x, arrow_y, 3, arrowLen);
   arrowEndx = arrow.x + 10*sin(20);
   arrowEndy = arrow.y + 10*sin(20);
 
@@ -82,6 +83,8 @@ function setup() {
 function draw() {
   
   background(255);
+  line(1,1,1,height);
+  line(width-1,1,width-1,height);
   strokeWeight(2);
   grid(true);
   myFunction();
@@ -89,19 +92,19 @@ function draw() {
   if (potential == 3) {
     strokeWeight(2);
     stroke(0, 250, 0);
-    line(0, width/2+height/2, width/2+height/2, 0);
+    line(0, (width-200)/2+height/2, (width-200)/2+height/2, 0);
   }
 
   if (potential == 4) {
     fill(0, 255, 0);
-    ellipse(width/2, height/2, 12, 12);
+    ellipse((width-200)/2, height/2, 12, 12);
   }
 
   if (potential == 5) {
     strokeWeight(2);
     stroke(120);  
     for (var i = 0; i<height; i=i+10) {
-      line(width/2, i, width/2, i+5);
+      line((width-200)/2, i, (width-200)/2, i+5);
     }
   }
 
@@ -116,14 +119,20 @@ function draw() {
     nodes[i].display();
     
     for (var k = 0; k< pathNumber; k++){
-      paths[k][i].display();
+      console.log(typeof paths[k][i]);
+      if (typeof paths[k][i] != 'undefined'){
+        paths[k][i].display();
+      }
     }
+
     if (i>0) {
       stroke(0);
       strokeWeight(2);
       line(nodes[i].x, nodes[i].y, nodes[i-1].x, nodes[i-1].y);
       for (var k = 0; k<pathNumber; k++){
-        line(paths[k][i].x, paths[k][i].y, paths[k][i-1].x, paths[k][i-1].y);
+        if (typeof paths[k][i] != 'undefined'){
+          line(paths[k][i].x, paths[k][i].y, paths[k][i-1].x, paths[k][i-1].y);
+        }
       }
     }
   }
@@ -143,10 +152,8 @@ function draw() {
   for (var j = 0; j < arrows.length; j++){
     arrows[j].display();
   }
-
-
-
   arrow.display();
+
 }
 
 function grid(y) {
@@ -154,7 +161,7 @@ function grid(y) {
     strokeWeight(0.5);
     stroke(150);
     for (var i = 1; i<9*2; i++) {
-      line(width, .5*i*height/9, 0, .5*i*height/9);
+      line(width-200, .5*i*height/9, 0, .5*i*height/9);
     }
     for (var i = 1; i<9*4; i++) {
       line(.5*i*height/9, 0, .5*i*height/9, height);
@@ -223,7 +230,7 @@ function getPE(q) {
     return -(2900*q.x)/nodeNum + 1500000/nodeNum;      //(20000/(nodeNum*nodeNum)*(q.x) - 1900000/(nodeNum*nodeNum) );  
       
   case '3': 
-    if (q.x + q.y > width/2 + height/2 ) {
+    if (q.x + q.y > (width-200)/2 + height/2 ) {
       return -(2000000/nodeNum);
       }
       else {
@@ -232,10 +239,10 @@ function getPE(q) {
     break;
 
   case '4': 
-    return -(76000000/nodeNum)*(1/(dist(q.x, q.y, width/2, height/2)));
+    return -(76000000/nodeNum)*(1/(dist(q.x, q.y, (width-200)/2, height/2)));
 
   case '5':
-    return (2.5/sqrt(nodeNum))*(sq(q.x-width/2));
+    return (2.5/sqrt(nodeNum))*(sq(q.x-(width-200)/2));
 
   default:
     return 0;
@@ -247,7 +254,7 @@ function numCheck(){
     nodes.length = 0;
     nodeNum = nodeNumSlider.value();
     for (var i = 0; i<nodeNum; i++) {
-      nodes.push(new Node(map(i, 0, nodeNum-1, 30, width-80), height/2));
+      nodes.push(new Node(map(i, 0, nodeNum-1, 80, width-280), height/2));
     } 
   }
 }
@@ -283,23 +290,41 @@ function mouseClicked() {
 }
 
 function optimizer() {
+  arrows =[];
+  paths = [];
+  for (var k = 0; k < pathNumber; k++){
+    paths.push([]);
+  }
   var jump = 1;
   if (potential ==3){
     jump = 20;
   }
-  for (var j = 0; j<400; j++) {
+  for (var j = 0; j<2; j++) {
     for (var i = 1;  i<nodeNumSlider.value()-1; i++) {
-      var oldAction = calculateK() - calculateU();
+      var oldAction = calculateK(nodes) - calculateU(nodes);
       var tempX = nodes[i].x;
       var tempY = nodes[i].y;
       nodes[i].x = nodes[i].x + randomGaussian()*jump;
       nodes[i].y = nodes[i].y + randomGaussian()*jump;
-      if ( calculateK() - calculateU() > oldAction) {
+      if ( calculateK(nodes) - calculateU(nodes) > oldAction) {
         nodes[i].x  = tempX;
         nodes[i].y = tempY;
       }
     }
-  }  
+  }
+
+    for (var i = 0; i<nodeNum; i++) {
+      nodes.push(new Node(map(i, 0, nodeNum-1, 80, width-280), height/2));
+      for (var k = 0; k< pathNumber; k++){
+        if (i == 0 || i == nodeNum-1){
+          paths[k].push(nodes[i]);
+        }
+        else{
+          paths[k].push(new Node(nodes[i].x + 20*(random()-.5), nodes[i].y+ 20*(random()-.5)) );
+        }
+      }
+    }
+
 }
 
 function splitter() {
@@ -356,7 +381,7 @@ function resetPaths(){
     paths.push([]);
   }
     for (var i = 0; i<nodeNum; i++) {
-      nodes.push(new Node(map(i, 0, nodeNum-1, 30, width-80), height/2));
+      nodes.push(new Node(map(i, 0, nodeNum-1, 80, width-280), height/2));
       for (var k = 0; k< pathNumber; k++){
         if (i == 0 || i == nodeNum-1){
           paths[k].push(nodes[i]);
@@ -366,9 +391,4 @@ function resetPaths(){
         }
       }
     }
-}
-
-function displayPaths(){
-
-
 }
