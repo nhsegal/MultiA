@@ -1,5 +1,4 @@
-var nodeNumSlider;
-
+var pathNumSlider;
 var pChoice0;
 var pChoice1;
 var pChoice2;
@@ -7,29 +6,44 @@ var pChoice3;
 var pChoice4;
 var pChoice5;
 
-var nodes = [];
-
-
 var potential = 1;
-var nodeNum = 7;
+var nodeNum = 3;
 var initialAction = 1;
 var initialU = 1;
 var initialK = 0;
 var scaleFactor;
-var most=100;
+
 var K_;
 var U_;
 var reset;
-var arrow;
-var arrow_x = 950;
-var arrow_y = 200;
 var arrows = [];
 
 var paths = [];
-var pathNumber = 20;
-var arrowEndx;
-var arrowEndy;
-var arrowLen = 5;
+var pathNumber = 11;
+
+var startX;
+var startY;
+var endX;
+var endY;
+
+var end1x;
+var end1y;
+var end2x;
+var end2y;
+
+var spacing = 10;
+
+/*
+To do:
+    add zoom button to phase arrow side that will change arrow length
+    display numerical value of amplitude
+    change drop down menu of potentials to something else - different initial conditions like reflection, refraction, etc
+    maybe force pathnumber to be odd. No that would ruin two slit interference
+    When path number is changed preserve the location of the end points.
+
+*/
+
+
 
 
 function setup() {
@@ -39,9 +53,9 @@ function setup() {
   textFont("Consolas");
   textStyle(NORMAL);
 
-  nodeNumSlider = createSlider(3,17,7);
-  nodeNumSlider.parent("sliderPos");
-  nodeNumSlider.size(240);  
+  pathNumSlider = createSlider(1,27,11);
+  pathNumSlider.parent("sliderPos");
+  pathNumSlider.size(240);  
   
   reset = createButton('Reset', 1);
   reset.parent("myContainer2");
@@ -50,38 +64,21 @@ function setup() {
   noStroke();
   resetPaths();
 
-  for (var i = 0; i<nodes.length; i++) {
-    nodes[i].clickedOn();
-    nodes[i].display();
-    
+  for (var i = 0; i<3; i++) {
     for (var k = 0; k< pathNumber; k++){
       paths[k][i].display();
     }
     if (i>0) {
       stroke(0);
       strokeWeight(2);
-      line(nodes[i].x, nodes[i].y, nodes[i-1].x, nodes[i-1].y);
       for (var k = 0; k<pathNumber; k++){
-
         line(paths[k][i].x, paths[k][i].y, paths[k][i-1].x, paths[k][i-1].y);
       }
     }
   }
-
-  //initialU = calculateU();
-  //initialK = calculateK();
-  //initialAction = calculateK() - calculateU();  
-
-  arrow = new actionArrow(arrow_x, arrow_y, 3, arrowLen);
-  arrowEndx = arrow.x + 10*sin(20);
-  arrowEndy = arrow.y + 10*sin(20);
-
-
- 
 }
 
 function draw() {
-  
   background(255);
   line(1,1,1,height);
   line(width-1,1,width-1,height);
@@ -112,23 +109,17 @@ function draw() {
     optimizer();
   }
 
-  nodeNumSlider.mouseReleased(numCheck);
-  for (var i = 0; i<nodes.length; i++) {
-    nodes[i].clickedOn();
-   
-    nodes[i].display();
-    
-    for (var k = 0; k< pathNumber; k++){
-      console.log(typeof paths[k][i]);
+  pathNumSlider.mouseReleased(numCheck);
+
+  for (var i = 0; i<3; i++) {
+    for (var k = 0; k< pathNumber; k++){  
       if (typeof paths[k][i] != 'undefined'){
         paths[k][i].display();
       }
     }
-
     if (i>0) {
       stroke(0);
       strokeWeight(2);
-      line(nodes[i].x, nodes[i].y, nodes[i-1].x, nodes[i-1].y);
       for (var k = 0; k<pathNumber; k++){
         if (typeof paths[k][i] != 'undefined'){
           line(paths[k][i].x, paths[k][i].y, paths[k][i-1].x, paths[k][i-1].y);
@@ -137,23 +128,30 @@ function draw() {
     }
   }
  
-  arrow.angle = ( getAction(nodes) )/4000;
   arrows =[]
-  arrows.push(arrow);
-
-  var a = arrow;
-
-  for (var q = 1; q<pathNumber; q++){
-    arrows.push(new actionArrow(a.x+a.len*cos(a.angle), a.y+a.len*sin(a.angle), a.angle, a.len));
-    arrows[q].angle = ( getAction(paths[q]) )/4000;
-    a = arrows[q];
+  for (var q = 0; q<pathNumber; q++){
+    var phase = getAction(paths[q])/4000;
+    if (q==0){
+      arrows.push(new actionArrow(875, height/2, phase, 10)  );
+      startX = 875;
+      startY = height/2;
+    }
+    else {
+      arrows.push(new actionArrow( arrows[q-1].x+10*cos(arrows[q-1].angle), arrows[q-1].y+10*sin(arrows[q-1].angle), phase, 10));
+      arrows[q].angle = ( getAction(paths[q]) )/4000;
+      a = arrows[q];
+      endX = arrows[q].x + 10*cos(arrows[q].angle);
+      endY = arrows[q].y + 10*sin(arrows[q].angle);
+    }
+    for (var j = 0; j < arrows.length; j++){
+      arrows[j].display();
+    }
+    if (q==pathNumber-1){
+      strokeWeight(2);
+      stroke(250,0,0);
+      line(startX, startY, endX, endY);
+    }
   }
-
-  for (var j = 0; j < arrows.length; j++){
-    arrows[j].display();
-  }
-  arrow.display();
-
 }
 
 function grid(y) {
@@ -173,9 +171,6 @@ function Node(ix, iy) {
   this.x = ix;
   this.y = iy;
   this.selected = false;
-  var selfX = this.x;
-  var selfY = this.y;
-
   this.display = function() {
     noStroke();
     if (this.selected == false) {
@@ -197,7 +192,6 @@ function Node(ix, iy) {
   }
 }
 
-
 function calculateK(path_) {
   var K = 0;
   for (var i=0; i<path_.length; i++) {  
@@ -205,8 +199,7 @@ function calculateK(path_) {
       K = K + sq(dist(path_[i].x, path_[i].y, path_[i-1].x, path_[i-1].y));
     }
   }
-  K = K*(nodeNum-1);
-  return K;
+  return 2*K;
 }
 
 function calculateU(path_) {
@@ -224,14 +217,14 @@ function getAction(path_) {
 function getPE(q) {
   switch (potential) {
   case '1': //linear grad upward
-    return -(2500*q.y)/nodeNum + 1500000/nodeNum;  //-(200/(nodeNum)*(q.y) -380000/(nodeNum)  
+    return -(2500*q.y)/3 + 1500000/3;  //-(200/(nodeNum)*(q.y) -380000/(nodeNum)  
     
   case '2': 
-    return -(2900*q.x)/nodeNum + 1500000/nodeNum;      //(20000/(nodeNum*nodeNum)*(q.x) - 1900000/(nodeNum*nodeNum) );  
+    return -(2900*q.x)/3 + 1500000/3;      //(20000/(nodeNum*nodeNum)*(q.x) - 1900000/(nodeNum*nodeNum) );  
       
   case '3': 
     if (q.x + q.y > (width-200)/2 + height/2 ) {
-      return -(2000000/nodeNum);
+      return -(2000000/3);
       }
       else {
         return 0;
@@ -239,10 +232,10 @@ function getPE(q) {
     break;
 
   case '4': 
-    return -(76000000/nodeNum)*(1/(dist(q.x, q.y, (width-200)/2, height/2)));
+    return -(76000000/3)*(1/(dist(q.x, q.y, (width-200)/2, height/2)));
 
   case '5':
-    return (2.5/sqrt(nodeNum))*(sq(q.x-(width-200)/2));
+    return (2.5/sqrt(3))*(sq(q.x-(width-200)/2));
 
   default:
     return 0;
@@ -250,90 +243,50 @@ function getPE(q) {
 }
 
 function numCheck(){
-  if (nodeNum != nodeNumSlider.value()){
-    nodes.length = 0;
-    nodeNum = nodeNumSlider.value();
-    for (var i = 0; i<nodeNum; i++) {
-      nodes.push(new Node(map(i, 0, nodeNum-1, 80, width-280), height/2));
+  if (pathNumber != pathNumSlider.value()){
+    end1x = paths[0][0].x;
+    end1y = paths[0][0].y;
+    end2x = paths[0][2].x;
+    end2y = paths[0][2].y; 
+    paths = [];
+    pathNumber = pathNumSlider.value();
+    for (var i = 0; i<pathNumber; i++) {
+      paths.push([]);
     } 
+    for (var i = 0; i<3; i++) {
+      for (var k = 0; k< pathNumber; k++){
+        if (i == 0){
+          paths[k].push(new Node(end1x, end1y));
+        }
+        else if (i == 2){
+          paths[k].push(new Node(end2x, end2y));
+        }
+        else{
+          paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k));
+        }
+      }
+    }
   }
 }
 
 function mouseClicked() {
   if (mouseButton == LEFT) {
-    for (var i = 0; i < nodes.length; i++) {
-      var p = nodes[i];
-      if (dist(mouseX, mouseY, p.x, p.y) < 5) {
-        nodes[i].selected =  !nodes[i].selected;
-        for (var j = 0; j < nodes.length; j++) {
-          if (j != i) {
-            nodes[j].selected = false;
-          }
-        }
-      }
-      else {
-        for (var k =0; k < pathNumber; k++){
-          if (dist(mouseX, mouseY, paths[k][i].x, paths[k][i].y) < 5){
-            paths[k][i].selected =  !paths[k][i].selected;
-            for (var j = 0; j < nodes.length; j++) {
-              for (var w = 0; w< paths.length; w++){
-                if ((w != k) && (j != i)) {
-                  paths[w][j].selected = false;
-                }
+    console.log("here");
+    for (var i =0; i < 3; i++){
+      for (var k =0; k < pathNumber; k++){
+        if (dist(mouseX, mouseY, paths[k][i].x, paths[k][i].y) < 5){
+          paths[k][i].selected =  !paths[k][i].selected;
+          for (var j = 0; j < 3; j++) {
+            for (var w = 0; w< paths.length; w++){
+              if ((w != k) && (j != i)) {
+                paths[w][j].selected = false;
               }
             }
           }
         }
       }
     }
-  }
-}
-
-function optimizer() {
-  arrows =[];
-  paths = [];
-  for (var k = 0; k < pathNumber; k++){
-    paths.push([]);
-  }
-  var jump = 1;
-  if (potential ==3){
-    jump = 20;
-  }
-  for (var j = 0; j<2; j++) {
-    for (var i = 1;  i<nodeNumSlider.value()-1; i++) {
-      var oldAction = calculateK(nodes) - calculateU(nodes);
-      var tempX = nodes[i].x;
-      var tempY = nodes[i].y;
-      nodes[i].x = nodes[i].x + randomGaussian()*jump;
-      nodes[i].y = nodes[i].y + randomGaussian()*jump;
-      if ( calculateK(nodes) - calculateU(nodes) > oldAction) {
-        nodes[i].x  = tempX;
-        nodes[i].y = tempY;
-      }
-    }
-  }
-
-    for (var i = 0; i<nodeNum; i++) {
-      nodes.push(new Node(map(i, 0, nodeNum-1, 80, width-280), height/2));
-      for (var k = 0; k< pathNumber; k++){
-        if (i == 0 || i == nodeNum-1){
-          paths[k].push(nodes[i]);
-        }
-        else{
-          paths[k].push(new Node(nodes[i].x + 20*(random()-.5), nodes[i].y+ 20*(random()-.5)) );
-        }
-      }
-    }
-
-}
-
-function splitter() {
-  var jump = 10;
-  for (var j = 0; j<4; j++) {
-    for (var i = 1;  i<nodeNumSlider.value()-1; i++) {
-      paths.push(new Path());
-    } 
-  }
+  }      
 }
 
 function actionArrow(x_, y_, angle_, len_){
@@ -341,30 +294,24 @@ function actionArrow(x_, y_, angle_, len_){
   this.y = y_;
   this.angle = angle_;
   this.len = len_;
-  
   this.display = function() {
-  strokeWeight(2);
-  stroke(0);
-  //smooth();
-    
-  push();
-    translate(this.x, this.y);
-    rotate(this.angle);
-    line(0, 0, this.len, 0);
-    
+    strokeWeight(1);
+    stroke(0);   
     push();
-      translate(this.len, 0);
-      rotate(atan(PI/6));
-      line(0,0, -this.len/10, 0);
-    pop();
-    
-    push();
-      translate(this.len, 0);
-      rotate(atan(-PI/6));
-      line(0,0, -this.len/10, 0);
-    pop();
-    
-  pop(); 
+      translate(this.x, this.y);
+      rotate(this.angle);
+      line(0, 0, this.len, 0);
+      push();
+        translate(this.len, 0);
+        rotate(atan(PI/6));
+        line(0,0, -this.len/10, 0);
+      pop();
+      push();
+        translate(this.len, 0);
+        rotate(atan(-PI/6));
+        line(0,0, -this.len/10, 0);
+      pop();
+    pop(); 
   }
 }
 
@@ -374,21 +321,18 @@ function myFunction() {
 }
 
 function resetPaths(){
-  nodes.length = 0;  
   paths.length = 0;
-  nodeNum = nodeNumSlider.value();
-  for (var k = 0; k < pathNumber; k++){
-    paths.push([]);
-  }
-    for (var i = 0; i<nodeNum; i++) {
-      nodes.push(new Node(map(i, 0, nodeNum-1, 80, width-280), height/2));
-      for (var k = 0; k< pathNumber; k++){
-        if (i == 0 || i == nodeNum-1){
-          paths[k].push(nodes[i]);
-        }
-        else{
-          paths[k].push(new Node(nodes[i].x + 20*(random()-.5), nodes[i].y+ 20*(random()-.5)) );
-        }
+  for (var i = 0; i<pathNumber; i++) {
+      paths.push([]);
+  } 
+  for (var i = 0; i<3; i++) {
+    for (var k = 0; k< pathNumber; k++){
+      if (i == 0 || i == 2){
+        paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2));
+      }
+      else{
+          paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 + 50-100*k/pathNumber ));
       }
     }
+  }
 }
