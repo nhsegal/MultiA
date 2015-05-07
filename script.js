@@ -1,20 +1,9 @@
 var pathNumSlider;
-var pChoice0;
-var pChoice1;
-var pChoice2;
-var pChoice3;
-var pChoice4;
-var pChoice5;
+var zoomIn; //The number of paths, set by the slider
+var situation = 1;  //Indicates what choice is select from the scenario drop down
+var hBarSlider;
 
-var potential = 1;
-var nodeNum = 3;
-var initialAction = 1;
-var initialU = 1;
-var initialK = 0;
-var scaleFactor;
-
-var K_;
-var U_;
+var hBar = 1/5000;
 var reset;
 var arrows = [];
 
@@ -28,23 +17,23 @@ var endY;
 
 var end1x;
 var end1y;
+var midx;
+var midy;
 var end2x;
 var end2y;
 
-var spacing = 10;
+var spacing = 8;
+
+var arrowLen = 6;
+var increaseLen;
+var decreaseLen;
 
 /*
 To do:
     add zoom button to phase arrow side that will change arrow length
     display numerical value of amplitude
     change drop down menu of potentials to something else - different initial conditions like reflection, refraction, etc
-    maybe force pathnumber to be odd. No that would ruin two slit interference
-    When path number is changed preserve the location of the end points.
-
 */
-
-
-
 
 function setup() {
   var cnv = createCanvas(1000, 400);
@@ -53,16 +42,28 @@ function setup() {
   textFont("Consolas");
   textStyle(NORMAL);
 
-  pathNumSlider = createSlider(1,27,11);
+  pathNumSlider = createSlider(1,50,11);
   pathNumSlider.parent("sliderPos");
   pathNumSlider.size(240);  
   
   reset = createButton('Reset', 1);
   reset.parent("myContainer2");
   reset.mousePressed(resetPaths);
-  stroke(100);
-  noStroke();
+ 
   resetPaths();
+
+  zoomIn = createButton('Zoom In', 1);
+  zoomIn.parent("zoomin");
+  zoomIn.mousePressed(function(){arrowLen = arrowLen*1.1});
+
+  zoomOut = createButton('Zoom Out', 1);
+  zoomOut.parent("zoomout");
+  zoomOut.mousePressed(function(){arrowLen = arrowLen/1.1});
+
+
+  hBarSlider = createSlider(5, 20, 1);
+  hBarSlider.parent("sliderPos2");
+  hBarSlider.size(240);
 
   for (var i = 0; i<3; i++) {
     for (var k = 0; k< pathNumber; k++){
@@ -79,25 +80,31 @@ function setup() {
 }
 
 function draw() {
+
   background(255);
   line(1,1,1,height);
   line(width-1,1,width-1,height);
   strokeWeight(2);
   grid(true);
-  myFunction();
+  
+  if (situation == 2) { //Draw Mirror
+    noStroke();
+    fill(100);
+    rect(50, 370, 700, 10);
+  }
 
-  if (potential == 3) {
+  if (situation == 3) {  
     strokeWeight(2);
     stroke(0, 250, 0);
     line(0, (width-200)/2+height/2, (width-200)/2+height/2, 0);
   }
 
-  if (potential == 4) {
+  if (situation == 4) {
     fill(0, 255, 0);
     ellipse((width-200)/2, height/2, 12, 12);
   }
 
-  if (potential == 5) {
+  if (situation == 5) {
     strokeWeight(2);
     stroke(120);  
     for (var i = 0; i<height; i=i+10) {
@@ -110,6 +117,8 @@ function draw() {
   }
 
   pathNumSlider.mouseReleased(numCheck);
+  //console.log(hBarSlider.value);
+
 
   for (var i = 0; i<3; i++) {
     for (var k = 0; k< pathNumber; k++){  
@@ -130,18 +139,20 @@ function draw() {
  
   arrows =[]
   for (var q = 0; q<pathNumber; q++){
-    var phase = getAction(paths[q])/4000;
+    var phase = getAction(paths[q])/(Math.pow(1000,hBarSlider.value()/10));
     if (q==0){
-      arrows.push(new actionArrow(875, height/2, phase, 10)  );
+      arrows.push(new actionArrow(875, height/2, phase, arrowLen)  );
       startX = 875;
       startY = height/2;
+      endX = arrows[0].x+arrowLen*cos(arrows[0].angle);
+      endY = arrows[0].y+arrowLen*sin(arrows[0].angle)
     }
     else {
-      arrows.push(new actionArrow( arrows[q-1].x+10*cos(arrows[q-1].angle), arrows[q-1].y+10*sin(arrows[q-1].angle), phase, 10));
-      arrows[q].angle = ( getAction(paths[q]) )/4000;
+      arrows.push(new actionArrow( arrows[q-1].x+arrowLen*cos(arrows[q-1].angle), arrows[q-1].y+arrowLen*sin(arrows[q-1].angle), phase, arrowLen));
+      arrows[q].angle = ( getAction(paths[q]) )/(Math.pow(1000,hBarSlider.value()/10));
       a = arrows[q];
-      endX = arrows[q].x + 10*cos(arrows[q].angle);
-      endY = arrows[q].y + 10*sin(arrows[q].angle);
+      endX = arrows[q].x + arrowLen*cos(arrows[q].angle);
+      endY = arrows[q].y + arrowLen*sin(arrows[q].angle);
     }
     for (var j = 0; j < arrows.length; j++){
       arrows[j].display();
@@ -178,8 +189,13 @@ function Node(ix, iy) {
     }
     else {
       fill(255, 0, 0);
-      this.x = mouseX;
-      this.y = mouseY;
+      if (situation==2  && this.y == 370 && (end2x !== this.x || end1x !== this.x)){ //mirror
+        this.x =mouseX;
+      }
+      else{
+        this.x = mouseX;
+        this.y = mouseY;
+      }
     }
     ellipse(this.x, this.y, 8, 8);
   }
@@ -205,7 +221,7 @@ function calculateK(path_) {
 function calculateU(path_) {
   var U = 0;
   for (var i=0; i<path_.length; i++) {  
-    U = U + getPE(path_[i]);
+    U = U + getSituation(path_[i]);
   }
   return U;
 }
@@ -214,14 +230,15 @@ function getAction(path_) {
     return calculateK(path_) - calculateU(path_);
 }
 
-function getPE(q) {
-  switch (potential) {
-  case '1': //linear grad upward
-    return -(2500*q.y)/3 + 1500000/3;  //-(200/(nodeNum)*(q.y) -380000/(nodeNum)  
-    
-  case '2': 
-    return -(2900*q.x)/3 + 1500000/3;      //(20000/(nodeNum*nodeNum)*(q.x) - 1900000/(nodeNum*nodeNum) );  
-      
+function getSituation(q) {
+  switch (situation) {
+
+  case '1': //Double slit
+    return 0;  
+  
+  case '2': //Reflection
+    return 0;         
+  
   case '3': 
     if (q.x + q.y > (width-200)/2 + height/2 ) {
       return -(2000000/3);
@@ -248,6 +265,8 @@ function numCheck(){
     end1y = paths[0][0].y;
     end2x = paths[0][2].x;
     end2y = paths[0][2].y; 
+    midx = paths[Math.floor(pathNumber/2)][1].x;
+    midy = paths[Math.floor(pathNumber/2)][1].y;
     paths = [];
     pathNumber = pathNumSlider.value();
     for (var i = 0; i<pathNumber; i++) {
@@ -262,18 +281,29 @@ function numCheck(){
           paths[k].push(new Node(end2x, end2y));
         }
         else{
-          paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k));
+          if (situation == 2){ //Mirror
+            paths[k].push(new Node(map(i,0,2,80,width-280)-(spacing/2)*(pathNumber-1)+spacing*k, 370));
+          }
+          else {
+            paths[k].push(new Node(midx, midy - (spacing/2)*(pathNumber-1)+ spacing*k));
+          }
         }
       }
     }
   }
 }
 
+function hBarCheck(){
+  //hBar = 1/pathNumSlider.value();
+
+}
+
 function mouseClicked() {
+  console.log(hBarSlider.value());
   if (mouseButton == LEFT) {
-    console.log("here");
     for (var i =0; i < 3; i++){
       for (var k =0; k < pathNumber; k++){
+        
         if (dist(mouseX, mouseY, paths[k][i].x, paths[k][i].y) < 5){
           paths[k][i].selected =  !paths[k][i].selected;
           for (var j = 0; j < 3; j++) {
@@ -284,6 +314,8 @@ function mouseClicked() {
             }
           }
         }
+
+
       }
     }
   }      
@@ -317,7 +349,8 @@ function actionArrow(x_, y_, angle_, len_){
 
 function myFunction() {
   var e = document.getElementById("menu1");
-  potential = e.options[e.selectedIndex].value;
+  situation = e.options[e.selectedIndex].value;
+  resetPaths();
 }
 
 function resetPaths(){
@@ -327,11 +360,26 @@ function resetPaths(){
   } 
   for (var i = 0; i<3; i++) {
     for (var k = 0; k< pathNumber; k++){
-      if (i == 0 || i == 2){
-        paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2));
+      //
+      if (situation==2){
+        if (i==0){
+          paths[k].push(new Node(map(i, 0, 2, 80, .8*width), height/2));
+        }
+        else if (i == 1){
+           paths[k].push(new Node(map(i,0,2,80,.8*width-280)-(spacing/2)*(pathNumber-1)+spacing*k, 370));
+        }
+        else if (i == 2){
+          paths[k].push(new Node(map(i, 0, 2, 80, .8*width), height/2));
+        }
       }
-      else{
-          paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 + 50-100*k/pathNumber ));
+
+      else { 
+        if (i == 0 || i == 2){
+          paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2));
+        }
+        else{
+            paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k));
+          }
       }
     }
   }

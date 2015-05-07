@@ -17,28 +17,32 @@
 
 <!--<h4>-->
 <p>
-The dots connected with lines mark the trajectory of a particle through space. The colored bars on the right display the sum of the kinetic energy along the trajectory; the sum of the potential energy along the trajectory; and the action, which is the difference between the two.  
+The dots connected with lines mark various trajectories of a particle. In quantum mechanics, the way one calculates the probability that a particle starting at point A will be at point B a fixed time T later is by calculating the action for each possible trajectory and rotating a little vector by this action. Then one lays all the little vectors tip-to-tail. The square of the sum of these vectors is proportional to the probability that the particle will go from A to B in time T. In mathspeak: one is integrating over all possible paths from A to B, but it is a vector quantity that one is integrating. The phase of each vector in the integrand is itself the result of an integral along the path that that vector represents. 
 </p>
 <p>
-Use the dropdown menu to pick a potential energy function and the slider to control the number of dots.
-Use the mouse to select the dots and adjust the trajectory. 
-By successively moving the dots between the end points try to find the path that minimizes the action.
-Click any button on the keyboard several times and the computer will minimize the action.
+On the right of the simulation one can see the vector addition of the little arrows. The resultant is in red. 
+</p>
+<p>
+Use the dropdown menu to pick a potential energy function and the slider to control the number of paths.
+Use the mouse to select the dots and adjust the trajectories. 
 </p>
 <hr>
 <p>
-Potential Energy Function: 
+Scenarios: 
 <select autofocus id="menu1" onchange="myFunction()">
-
-  <option value=0>Constant (Free Particle)</option>
-  <option value=1 selected="selected">Linear Gradient Upward</option>
-  <option value=2>Linear Gradient Leftward</option>
-  <option value=3>Energy Step</option>
+  <option value=0 selected="selected">Free Particle</option>
+  <option value=1>Double Slit</option>
+  <option value=2>Reflection</option>
+  <option value=3>Diffraction Grating</option>
   <option value=4>Inverse Well</option>
   <option value=5>Simple Harmonic</option>
 </select>
 <span id="sliderPos"> Number of paths</span>
+<span id="sliderPos2"> hBar</span>
 </p>
+<div id= "zoomin" ></div>
+<div id= "zoomout" ></div>
+
  <div id="myContainer"></div>
 
 <!--<div id="sliderPos"> Number of dots</div>-->
