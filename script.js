@@ -27,6 +27,7 @@ var spacing = 8;
 var arrowLen = 6;
 var increaseLen;
 var decreaseLen;
+var even = false;
 
 /*
 To do:
@@ -242,8 +243,10 @@ function numCheck(){
     end2x = paths[0][2].x;
     end2y = paths[0][2].y; 
     midx = paths[Math.floor(pathNumber/2)][1].x;
-    midy = paths[Math.floor(pathNumber/2)][1].y;
+    midy = paths[Math.floor(pathNumber/2)][1].y;    
     paths = [];
+    
+
     pathNumber = pathNumSlider.value();
     for (var i = 0; i<pathNumber; i++) {
       paths.push([]);
@@ -258,10 +261,12 @@ function numCheck(){
         }
         if (i==1){
           if (situation == 2){ //Mirror
-            paths[k].push(new Node(.35*width - 35 + k*spacing, 370));
+            paths[k].push(new Node(midx - (spacing/2)*(pathNumber-1)+ spacing*k, 370));
           }
-          else if (situation == 3 || situation == 2){ //Grating
-            paths[k].push(new Node(.35*width - 35 + k*20, 370));
+          else if (situation == 3){ //Grating
+               paths[k].push(new Node( (.35*width - 38 + k*40)/2    , 370));
+          
+
           }
           else {
             paths[k].push(new Node(midx, midy - (spacing/2)*(pathNumber-1)+ spacing*k));
@@ -349,10 +354,11 @@ function resetPaths(){
           paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
         }
         else if (i == 1){
-           paths[k].push(new Node(.35*width - 35 + k*20, 370));
+           paths[k].push(new Node( (.35*width - 38 + k*40)/2    , 370));
         }
         else if (i == 2){
-          paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
+          paths[k].push(new Node(map(i, 0, 2, 40, .75*width), height/2));
+          
         }
       }
 
