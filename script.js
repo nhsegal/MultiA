@@ -15,12 +15,12 @@ var startY;
 var endX;
 var endY;
 
-var end1x;
-var end1y;
-var midx;
-var midy;
-var end2x;
-var end2y;
+var end1x = 0;
+var end1y = 0;
+var midx = 200;
+var midy = 200;
+var end2x = 700;
+var end2y = 300;
 
 var spacing = 8;
 
@@ -44,7 +44,7 @@ function setup() {
 
   pathNumSlider = createSlider(1,50,11);
   pathNumSlider.parent("sliderPos");
-  pathNumSlider.size(240);  
+  pathNumSlider.size(240);   
   
   reset = createButton('Reset', 1);
   reset.parent("myContainer2");
@@ -61,7 +61,7 @@ function setup() {
   zoomOut.mousePressed(function(){arrowLen = arrowLen/1.1});
 
 
-  hBarSlider = createSlider(5, 20, 1);
+  hBarSlider = createSlider(5, 20, 14);
   hBarSlider.parent("sliderPos2");
   hBarSlider.size(240);
 
@@ -77,6 +77,7 @@ function setup() {
       }
     }
   }
+
 }
 
 function draw() {
@@ -87,34 +88,27 @@ function draw() {
   strokeWeight(2);
   grid(true);
   
-  if (situation == 2) { //Draw Mirror
-    noStroke();
-    fill(100);
-    rect(50, 370, 700, 10);
+  switch(situation){
+    case '2': //Draw mirror
+      noStroke();
+      fill(100);
+      rect(50, 370, 700, 10);
+    break;
+
+    case '3': //Draw grating
+      noStroke();
+      fill(100);
+      rect(50, 380, 700, 10);
+      for (var i = 0; i < 35; i++){
+        rect(50 + i*20, 370, 10, 10);
+      }
+    break;
+
+    default:
+    break;
   }
 
-  if (situation == 3) {  
-    strokeWeight(2);
-    stroke(0, 250, 0);
-    line(0, (width-200)/2+height/2, (width-200)/2+height/2, 0);
-  }
 
-  if (situation == 4) {
-    fill(0, 255, 0);
-    ellipse((width-200)/2, height/2, 12, 12);
-  }
-
-  if (situation == 5) {
-    strokeWeight(2);
-    stroke(120);  
-    for (var i = 0; i<height; i=i+10) {
-      line((width-200)/2, i, (width-200)/2, i+5);
-    }
-  }
-
-  if (keyIsPressed===true) {
-    optimizer();
-  }
 
   pathNumSlider.mouseReleased(numCheck);
   //console.log(hBarSlider.value);
@@ -139,17 +133,17 @@ function draw() {
  
   arrows =[]
   for (var q = 0; q<pathNumber; q++){
-    var phase = getAction(paths[q])/(Math.pow(1000,hBarSlider.value()/10));
+    var phase = calculateK(paths[q])/(Math.pow(1000,hBarSlider.value()/10));
     if (q==0){
-      arrows.push(new actionArrow(875, height/2, phase, arrowLen)  );
-      startX = 875;
+      arrows.push(new actionArrow(width*.9, height/2, phase, arrowLen)  );
+      startX = width*.9;
       startY = height/2;
       endX = arrows[0].x+arrowLen*cos(arrows[0].angle);
       endY = arrows[0].y+arrowLen*sin(arrows[0].angle)
     }
     else {
       arrows.push(new actionArrow( arrows[q-1].x+arrowLen*cos(arrows[q-1].angle), arrows[q-1].y+arrowLen*sin(arrows[q-1].angle), phase, arrowLen));
-      arrows[q].angle = ( getAction(paths[q]) )/(Math.pow(1000,hBarSlider.value()/10));
+      arrows[q].angle = ( calculateK(paths[q]) )/(Math.pow(1000,hBarSlider.value()/10));
       a = arrows[q];
       endX = arrows[q].x + arrowLen*cos(arrows[q].angle);
       endY = arrows[q].y + arrowLen*sin(arrows[q].angle);
@@ -215,30 +209,15 @@ function calculateK(path_) {
       K = K + sq(dist(path_[i].x, path_[i].y, path_[i-1].x, path_[i-1].y));
     }
   }
-  return 2*K;
+  return K;
 }
 
-function calculateU(path_) {
-  var U = 0;
-  for (var i=0; i<path_.length; i++) {  
-    U = U + getSituation(path_[i]);
-  }
-  return U;
-}
-
-function getAction(path_) {
-    return calculateK(path_) - calculateU(path_);
-}
-
-function getSituation(q) {
+/*function setupSituation(q) {
   switch (situation) {
-
   case '1': //Double slit
     return 0;  
-  
   case '2': //Reflection
     return 0;         
-  
   case '3': 
     if (q.x + q.y > (width-200)/2 + height/2 ) {
       return -(2000000/3);
@@ -247,17 +226,14 @@ function getSituation(q) {
         return 0;
       }
     break;
-
   case '4': 
     return -(76000000/3)*(1/(dist(q.x, q.y, (width-200)/2, height/2)));
-
   case '5':
     return (2.5/sqrt(3))*(sq(q.x-(width-200)/2));
-
   default:
     return 0;
   }
-}
+}*/
 
 function numCheck(){
   if (pathNumber != pathNumSlider.value()){
@@ -277,12 +253,15 @@ function numCheck(){
         if (i == 0){
           paths[k].push(new Node(end1x, end1y));
         }
-        else if (i == 2){
+        if (i == 2){
           paths[k].push(new Node(end2x, end2y));
         }
-        else{
+        if (i==1){
           if (situation == 2){ //Mirror
-            paths[k].push(new Node(map(i,0,2,80,width-280)-(spacing/2)*(pathNumber-1)+spacing*k, 370));
+            paths[k].push(new Node(.35*width - 35 + k*spacing, 370));
+          }
+          else if (situation == 3 || situation == 2){ //Grating
+            paths[k].push(new Node(.35*width - 35 + k*20, 370));
           }
           else {
             paths[k].push(new Node(midx, midy - (spacing/2)*(pathNumber-1)+ spacing*k));
@@ -293,17 +272,10 @@ function numCheck(){
   }
 }
 
-function hBarCheck(){
-  //hBar = 1/pathNumSlider.value();
-
-}
-
 function mouseClicked() {
-  console.log(hBarSlider.value());
   if (mouseButton == LEFT) {
     for (var i =0; i < 3; i++){
-      for (var k =0; k < pathNumber; k++){
-        
+      for (var k =0; k < pathNumber; k++){        
         if (dist(mouseX, mouseY, paths[k][i].x, paths[k][i].y) < 5){
           paths[k][i].selected =  !paths[k][i].selected;
           for (var j = 0; j < 3; j++) {
@@ -314,8 +286,6 @@ function mouseClicked() {
             }
           }
         }
-
-
       }
     }
   }      
@@ -347,29 +317,42 @@ function actionArrow(x_, y_, angle_, len_){
   }
 }
 
-function myFunction() {
-  var e = document.getElementById("menu1");
+function getSituation() {
+  var e = document.getElementById("scenarioMenu");
   situation = e.options[e.selectedIndex].value;
   resetPaths();
 }
 
 function resetPaths(){
   paths.length = 0;
-  for (var i = 0; i<pathNumber; i++) {
+  for (var j = 0; j<pathNumber; j++) {
       paths.push([]);
   } 
+
   for (var i = 0; i<3; i++) {
     for (var k = 0; k< pathNumber; k++){
-      //
-      if (situation==2){
+      if (situation==2){ //mirror
         if (i==0){
-          paths[k].push(new Node(map(i, 0, 2, 80, .8*width), height/2));
+          paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
         }
         else if (i == 1){
-           paths[k].push(new Node(map(i,0,2,80,.8*width-280)-(spacing/2)*(pathNumber-1)+spacing*k, 370));
+           paths[k].push(new Node(.35*width - 35 + k*spacing, 370));
         }
         else if (i == 2){
-          paths[k].push(new Node(map(i, 0, 2, 80, .8*width), height/2));
+          console.log("here");
+          paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
+        }
+      }
+
+      else if (situation==3){ //grating
+        if (i==0){
+          paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
+        }
+        else if (i == 1){
+           paths[k].push(new Node(.35*width - 35 + k*20, 370));
+        }
+        else if (i == 2){
+          paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
         }
       }
 
@@ -379,7 +362,7 @@ function resetPaths(){
         }
         else{
             paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k));
-          }
+        }
       }
     }
   }
