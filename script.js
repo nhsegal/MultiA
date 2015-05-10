@@ -37,7 +37,7 @@ To do:
 */
 
 function setup() {
-  var cnv = createCanvas(1000, 400);
+  var cnv = createCanvas(1200, 400);
   cnv.parent("myContainer");
   textSize(16);
   textFont("Consolas");
@@ -93,15 +93,15 @@ function draw() {
     case '2': //Draw mirror
       noStroke();
       fill(100);
-      rect(50, 370, 700, 10);
+      rect(40, 370, 900, 10);
     break;
 
     case '3': //Draw grating
       noStroke();
       fill(100);
-      rect(50, 380, 700, 10);
-      for (var i = 0; i < 35; i++){
-        rect(50 + i*20, 370, 10, 10);
+      rect(40, 380, 900, 10);
+      for (var i = 0; i < 45; i++){
+        rect(47 + i*20, 370, 10, 10);
       }
     break;
 
@@ -167,7 +167,7 @@ function grid(y) {
     for (var i = 1; i<9*2; i++) {
       line(width-200, .5*i*height/9, 0, .5*i*height/9);
     }
-    for (var i = 1; i<9*4; i++) {
+    for (var i = 1; i<9*5; i++) {
       line(.5*i*height/9, 0, .5*i*height/9, height);
     }
   }
@@ -213,28 +213,6 @@ function calculateK(path_) {
   return K;
 }
 
-/*function setupSituation(q) {
-  switch (situation) {
-  case '1': //Double slit
-    return 0;  
-  case '2': //Reflection
-    return 0;         
-  case '3': 
-    if (q.x + q.y > (width-200)/2 + height/2 ) {
-      return -(2000000/3);
-      }
-      else {
-        return 0;
-      }
-    break;
-  case '4': 
-    return -(76000000/3)*(1/(dist(q.x, q.y, (width-200)/2, height/2)));
-  case '5':
-    return (2.5/sqrt(3))*(sq(q.x-(width-200)/2));
-  default:
-    return 0;
-  }
-}*/
 
 function numCheck(){
   if (pathNumber != pathNumSlider.value()){
