@@ -1,7 +1,9 @@
 var pathNumSlider;
 var zoomIn; //The number of paths, set by the slider
-var situation = 1;  //Indicates what choice is select from the scenario drop down
+var situation = 0;  //Indicates what choice is select from the scenario drop down
 var hBarSlider;
+var spacingSlider;
+var scan;
 
 var hBar = 1/5000;
 var reset;
@@ -15,6 +17,10 @@ var startY;
 var endX;
 var endY;
 
+var scanLineX;
+var scanLineY;
+
+//node positions
 var end1x = 0;
 var end1y = 0;
 var midx = 200;
@@ -27,7 +33,9 @@ var spacing = 8;
 var arrowLen = 6;
 var increaseLen;
 var decreaseLen;
-var even = false;
+
+var scan = [];
+var scanMax = 0;
 
 /*
 To do:
@@ -45,7 +53,7 @@ function setup() {
 
   pathNumSlider = createSlider(1,50,11);
   pathNumSlider.parent("sliderPos");
-  pathNumSlider.size(240);   
+  //pathNumSlider.size(240,200);   
   
   reset = createButton('Reset', 1);
   reset.parent("myContainer2");
@@ -61,60 +69,55 @@ function setup() {
   zoomOut.parent("zoomout");
   zoomOut.mousePressed(function(){arrowLen = arrowLen/1.1});
 
+  scan = createButton('Scan', 1);
+  scan.parent("scan");
+  scan.mousePressed(takeScan);
 
   hBarSlider = createSlider(5, 20, 14);
   hBarSlider.parent("sliderPos2");
   hBarSlider.size(240);
 
-  for (var i = 0; i<3; i++) {
-    for (var k = 0; k< pathNumber; k++){
-      paths[k][i].display();
-    }
-    if (i>0) {
-      stroke(0);
-      strokeWeight(2);
-      for (var k = 0; k<pathNumber; k++){
-        line(paths[k][i].x, paths[k][i].y, paths[k][i-1].x, paths[k][i-1].y);
-      }
-    }
-  }
+  spacingSlider = createSlider(1, 20, 8);
+  spacingSlider.parent("sliderPos3");
+  spacingSlider.size(240);
+
 
 }
 
 function draw() {
-
   background(255);
-  line(1,1,1,height);
-  line(width-1,1,width-1,height);
-  strokeWeight(2);
+  
   grid(true);
   
   switch(situation){
     case '2': //Draw mirror
       noStroke();
       fill(100);
-      rect(40, 370, 900, 10);
+      rect(40, 370, 1000, 10);
     break;
 
     case '3': //Draw grating
       noStroke();
       fill(100);
-      rect(40, 380, 900, 10);
-      for (var i = 0; i < 45; i++){
-        rect(47 + i*20, 370, 10, 10);
+      rect(40, 380, 900, 10);      
+      for (var i = 0; i < paths.length; i++){
+         if (typeof paths[i][1].x != 'undefined'){
+        rect(paths[i][1].x-3, 370, 10, 10 );
+      }
+       // paths[k].push(new Node( (.15*width - 50 + k*5 + (Math.floor(k/3))*4*spacing)    , 370));
+        //rect(47 + i*spacing*2.5, 370, spacing*1.75, 10);
       }
     break;
 
     default:
     break;
   }
-
-
-
+  
   pathNumSlider.mouseReleased(numCheck);
-  //console.log(hBarSlider.value);
+  spacingSlider.mouseReleased(function(){spacing = spacingSlider.value();  return resetPaths()});
 
-
+  //Display each nonde in each path array in the paths array
+  //and connect the nodes for with lines
   for (var i = 0; i<3; i++) {
     for (var k = 0; k< pathNumber; k++){  
       if (typeof paths[k][i] != 'undefined'){
@@ -132,32 +135,54 @@ function draw() {
     }
   }
  
-  arrows =[]
-  for (var q = 0; q<pathNumber; q++){
-    var phase = calculateK(paths[q])/(Math.pow(1000,hBarSlider.value()/10));
-    if (q==0){
-      arrows.push(new actionArrow(width*.9, height/2, phase, arrowLen)  );
-      startX = width*.9;
-      startY = height/2;
-      endX = arrows[0].x+arrowLen*cos(arrows[0].angle);
-      endY = arrows[0].y+arrowLen*sin(arrows[0].angle)
+  //Calculate the phase associated with each path
+  //Push an arrow with that phase into the arrows array
+  //Display the arrows tip to tail
+  getAction();
+  for (var j = 0; j < arrows.length; j++){
+    arrows[j].display();
+  } 
+  strokeWeight(2);
+  stroke(250,0,0);
+  line(startX, startY, endX, endY);
+  fill(10);
+
+  if (scan.length > 0){
+    strokeWeight(2);
+    stroke(120);  
+
+    if (situation == 2 || situation == 3){
+      for (var i = 0; i<width; i=i+10) {
+        line(i, scanLineY, i+5, scanLineY);       
+      }
     }
     else {
-      arrows.push(new actionArrow( arrows[q-1].x+arrowLen*cos(arrows[q-1].angle), arrows[q-1].y+arrowLen*sin(arrows[q-1].angle), phase, arrowLen));
-      arrows[q].angle = ( calculateK(paths[q]) )/(Math.pow(1000,hBarSlider.value()/10));
-      a = arrows[q];
-      endX = arrows[q].x + arrowLen*cos(arrows[q].angle);
-      endY = arrows[q].y + arrowLen*sin(arrows[q].angle);
+      for (var i = 0; i<height; i=i+10) {
+        line(scanLineX, i, scanLineX, i+5); 
+      }
     }
-    for (var j = 0; j < arrows.length; j++){
-      arrows[j].display();
-    }
-    if (q==pathNumber-1){
-      strokeWeight(2);
-      stroke(250,0,0);
-      line(startX, startY, endX, endY);
+   
+    fill(200,0,0);
+    stroke(200,0,0);
+    for (var i = 0; i < scan.length; i++ ){
+      if (situation == 2 || situation == 3){ //mirror or grating
+        ellipse( i, map(scan[i], 0, scanMax, 0, height/4),        1,1);
+        line( i, map(scan[i], 0, scanMax/100, 0, height), (i-1), map(scan[i-1], 0, scanMax/100, 0, height)  );     
+      }
+      else { 
+        ellipse( map(scan[i], 0, scanMax, 0, width/5) , i, 1,1);  // map(scan[a], 0, max(scan), 0, 200)
+        line( map(scan[i], 0, scanMax/40, 0, width), i, map(scan[i-1], 0, scanMax/40, 0, width), i-1  );   
+      }
     }
   }
+  stroke(100);
+  line(1,1,1,height);
+  line(width-200,1,width-200,height);
+  line(width-1,1,width-1,height);
+  line(1,1,width,1);
+  line(1,height-1,width,height-1);
+  strokeWeight(2);
+  //fill(200,0,0);
 }
 
 function grid(y) {
@@ -213,9 +238,9 @@ function calculateK(path_) {
   return K;
 }
 
-
 function numCheck(){
-  if (pathNumber != pathNumSlider.value()){
+  scan.length =0;
+  if ((pathNumber != pathNumSlider.value())) {
     end1x = paths[0][0].x;
     end1y = paths[0][0].y;
     end2x = paths[0][2].x;
@@ -223,7 +248,6 @@ function numCheck(){
     midx = paths[Math.floor(pathNumber/2)][1].x;
     midy = paths[Math.floor(pathNumber/2)][1].y;    
     paths = [];
-    
 
     pathNumber = pathNumSlider.value();
     for (var i = 0; i<pathNumber; i++) {
@@ -231,20 +255,18 @@ function numCheck(){
     } 
     for (var i = 0; i<3; i++) {
       for (var k = 0; k< pathNumber; k++){
-        if (i == 0){
+        if (i == 0){ //start of path
           paths[k].push(new Node(end1x, end1y));
         }
-        if (i == 2){
+        if (i == 2){ //end of path
           paths[k].push(new Node(end2x, end2y));
         }
-        if (i==1){
+        if (i==1){  //middle of path
           if (situation == 2){ //Mirror
-            paths[k].push(new Node(midx - (spacing/2)*(pathNumber-1)+ spacing*k, 370));
+            paths[k].push(new Node(midx - (.5*spacing/2)*(pathNumber-1)+ .5*spacing*k, 370));
           }
           else if (situation == 3){ //Grating
-               paths[k].push(new Node( (.35*width - 38 + k*40)/2    , 370));
-          
-
+               paths[k].push(new Node( (.15*width - 50 + k*5 + (Math.floor(k/3))*4*spacing)    , 370));
           }
           else {
             paths[k].push(new Node(midx, midy - (spacing/2)*(pathNumber-1)+ spacing*k));
@@ -307,14 +329,31 @@ function getSituation() {
 }
 
 function resetPaths(){
+  scan.length = 0;
   paths.length = 0;
   for (var j = 0; j<pathNumber; j++) {
       paths.push([]);
   } 
-
   for (var i = 0; i<3; i++) {
     for (var k = 0; k< pathNumber; k++){
-      if (situation==2){ //mirror
+       if (situation==1){ //double slit
+        if (i==0){ //start of path
+          paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
+        }
+        else if (i == 1){ //middle of path
+          if (k%2 == 0){
+            paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k - 50));
+          }
+          else { 
+             paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k + 50));
+          }
+        }
+        else if (i == 2){
+          paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
+        }
+      }
+
+      else if (situation==2){ //mirror
         if (i==0){
           paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
         }
@@ -322,7 +361,7 @@ function resetPaths(){
            paths[k].push(new Node(.35*width - 35 + k*spacing, 370));
         }
         else if (i == 2){
-          console.log("here");
+         
           paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
         }
       }
@@ -332,11 +371,10 @@ function resetPaths(){
           paths[k].push(new Node(map(i, 0, 2, 80, .75*width), height/2));
         }
         else if (i == 1){
-           paths[k].push(new Node( (.35*width - 38 + k*40)/2    , 370));
+           paths[k].push(new Node( (.15*width - 50 + k*5 + (Math.floor(k/3))*4*spacing)    , 370));
         }
         else if (i == 2){
           paths[k].push(new Node(map(i, 0, 2, 40, .75*width), height/2));
-          
         }
       }
 
@@ -351,3 +389,66 @@ function resetPaths(){
     }
   }
 }
+
+function getAction(){
+  arrows =[]
+  for (var q = 0; q<pathNumber; q++){
+    var phase = calculateK(paths[q])/(Math.pow(1000,hBarSlider.value()/10));
+    if (q==0){
+      arrows.push(new actionArrow(width*.92, height/2, phase, arrowLen)  );
+      startX = width*.92;
+      startY = height/2;
+      endX = arrows[0].x+arrowLen*cos(arrows[0].angle);
+      endY = arrows[0].y+arrowLen*sin(arrows[0].angle)
+    }
+    else {
+      arrows.push(new actionArrow( arrows[q-1].x+arrowLen*cos(arrows[q-1].angle), arrows[q-1].y+arrowLen*sin(arrows[q-1].angle), phase, arrowLen));
+      arrows[q].angle = ( calculateK(paths[q]) )/(Math.pow(1000,hBarSlider.value()/10));
+      a = arrows[q];
+      endX = arrows[q].x + arrowLen*cos(arrows[q].angle);
+      endY = arrows[q].y + arrowLen*sin(arrows[q].angle);
+    }
+  }
+}
+
+
+function takeScan(){
+  var oX = paths[0][2].x;
+  var oY = paths[0][2].y;
+  scan = [];
+  scanLineX = paths[0][2].x;
+  scanLineY = paths[0][2].y;
+  if (situation == 2 || situation ==3){ // for reflection or diffraction scan across top
+    for (var i = 0; i<width; i++){     
+      for (var j=0; j<pathNumber; j++){
+        paths[j][2].x = i;
+      }
+      getAction();   
+      scan.push(dist(startX, startY, endX, endY)*dist(startX, startY, endX, endY));
+    } 
+  }
+
+  else {
+    for (var i = 0; i<height; i++){     
+      for (var j=0; j<pathNumber; j++){
+        paths[j][2].y = i;
+      }
+      getAction();
+      scan.push(dist(startX, startY, endX, endY)*dist(startX, startY, endX, endY));
+    } 
+  }
+
+  scanMax=0;
+  for (var i=scan.length; i--;) {
+    scanMax+=scan[i];
+  }
+  
+   for (var k = 0; k< pathNumber; k++){  
+      if (typeof paths[k][2] != 'undefined'){
+        paths[k][2].x = oX;
+        paths[k][2].y = oY;
+        paths[k][2].display();
+      }
+    }
+}
+  
