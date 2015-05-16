@@ -342,10 +342,10 @@ function resetPaths(){
         }
         else if (i == 1){ //middle of path
           if (k%2 == 0){
-            paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k - 50));
+            paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k - 70));
           }
           else { 
-             paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k + 50));
+             paths[k].push(new Node(map(i, 0, 2, 80, width-280), height/2 - (spacing/2)*(pathNumber-1)+ spacing*k + 70));
           }
         }
         else if (i == 2){
