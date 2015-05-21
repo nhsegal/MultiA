@@ -1,4 +1,3 @@
-var pathNumSlider;
 var zoomIn; //The number of paths, set by the slider
 var situation = 0;  //Indicates what choice is select from the scenario drop down
 var hBarSlider;
@@ -36,7 +35,7 @@ var decreaseLen;
 
 var scan = [];
 var scanMax = 0;
-
+var oldPathNum= 8;
 /*
 To do:
     add zoom button to phase arrow side that will change arrow length
@@ -51,27 +50,26 @@ function setup() {
   textFont("Consolas");
   textStyle(NORMAL);
 
-  pathNumSlider = createSlider(1,50,11);
-  pathNumSlider.parent("sliderPos");
-  //pathNumSlider.size(240,200);   
-  
-  reset = createButton('Reset', 1);
-  reset.parent("myContainer2");
-  reset.mousePressed(resetPaths);
- 
-  resetPaths();
-
   zoomIn = createButton('Zoom In', 1);
-  zoomIn.parent("zoomin");
+  zoomIn.parent("myContainer");//("zoomin");
+  zoomIn.position(1022,232);
   zoomIn.mousePressed(function(){arrowLen = arrowLen*1.1});
 
   zoomOut = createButton('Zoom Out', 1);
-  zoomOut.parent("zoomout");
+  zoomOut.parent("myContainer");//("zoomout");
+  zoomOut.position(1112,232);
   zoomOut.mousePressed(function(){arrowLen = arrowLen/1.1});
 
-  scan = createButton('Scan', 1);
-  scan.parent("scan");
+  scan = createButton('&nbsp Scan &nbsp', 1);
+  scan.parent("buttonholder2");
+  //scan.position(0,178);
   scan.mousePressed(takeScan);
+
+  reset = createButton('&nbsp Reset &nbsp', 1);
+  reset.parent("buttonholder");
+  //reset.position = (0,0);
+  reset.mousePressed(resetPaths);
+  resetPaths();
 
   hBarSlider = createSlider(5, 20, 14);
   hBarSlider.parent("sliderPos2");
@@ -80,15 +78,11 @@ function setup() {
   spacingSlider = createSlider(1, 20, 8);
   spacingSlider.parent("sliderPos3");
   spacingSlider.size(240);
-
-
 }
 
 function draw() {
   background(255);
-  
   grid(true);
-  
   switch(situation){
     case '2': //Draw mirror
       noStroke();
@@ -101,25 +95,22 @@ function draw() {
       fill(100);
       rect(40, 380, 900, 10);      
       for (var i = 0; i < paths.length; i++){
-         if (typeof paths[i][1].x != 'undefined'){
-        rect(paths[i][1].x-3, 370, 10, 10 );
-      }
-       // paths[k].push(new Node( (.15*width - 50 + k*5 + (Math.floor(k/3))*4*spacing)    , 370));
-        //rect(47 + i*spacing*2.5, 370, spacing*1.75, 10);
+        if (typeof paths[i][1].x != 'undefined'){
+          rect(paths[i][1].x-3, 370, 10, 10 );
+        }
       }
     break;
 
     default:
     break;
   }
-  
-  pathNumSlider.mouseReleased(numCheck);
-  spacingSlider.mouseReleased(function(){spacing = spacingSlider.value();  return resetPaths()});
+
+  spacingSlider.mouseReleased(function(){spacing = spacingSlider.value();});
 
   //Display each nonde in each path array in the paths array
   //and connect the nodes for with lines
   for (var i = 0; i<3; i++) {
-    for (var k = 0; k< pathNumber; k++){  
+    for (var k = 0; k<pathNumber; k++){  
       if (typeof paths[k][i] != 'undefined'){
         paths[k][i].display();
       }
@@ -182,7 +173,7 @@ function draw() {
   line(1,1,width,1);
   line(1,height-1,width,height-1);
   strokeWeight(2);
-  //fill(200,0,0);
+  
 }
 
 function grid(y) {
@@ -238,24 +229,26 @@ function calculateK(path_) {
   return K;
 }
 
+
 function numCheck(){
   scan.length =0;
-  if ((pathNumber != pathNumSlider.value())) {
-    end1x = paths[0][0].x;
-    end1y = paths[0][0].y;
-    end2x = paths[0][2].x;
-    end2y = paths[0][2].y; 
-    midx = paths[Math.floor(pathNumber/2)][1].x;
-    midy = paths[Math.floor(pathNumber/2)][1].y;    
-    paths = [];
+  end1x = paths[0][0].x;
+  end1y = paths[0][0].y;
+  end2x = paths[0][2].x;
+  end2y = paths[0][2].y; 
+  
+  midx = paths[Math.floor(oldPathNum/2 +1 )][1].x;
+  midy = paths[Math.floor(oldPathNum/2 + 1)][1].y;
+ 
+  paths.length = 0;
 
-    pathNumber = pathNumSlider.value();
-    for (var i = 0; i<pathNumber; i++) {
-      paths.push([]);
-    } 
-    for (var i = 0; i<3; i++) {
-      for (var k = 0; k< pathNumber; k++){
-        if (i == 0){ //start of path
+
+  for (var i = 0; i<pathNumber; i++) {
+    paths.push([]);
+  } 
+  for (var i = 0; i<3; i++) {
+    for (var k = 0; k< pathNumber; k++){
+      if (i == 0){ //start of path
           paths[k].push(new Node(end1x, end1y));
         }
         if (i == 2){ //end of path
@@ -273,8 +266,8 @@ function numCheck(){
           }
         }
       }
-    }
-  }
+   }
+  
 }
 
 function mouseClicked() {
@@ -326,6 +319,13 @@ function getSituation() {
   var e = document.getElementById("scenarioMenu");
   situation = e.options[e.selectedIndex].value;
   resetPaths();
+}
+
+function getPathNum() {
+  oldPathNum = pathNumber;
+  var e = document.getElementById("sliderPos");
+  pathNumber = e.options[e.selectedIndex].value;
+  numCheck();
 }
 
 function resetPaths(){

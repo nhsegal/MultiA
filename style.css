@@ -5,14 +5,14 @@ body {
 }
 
 button {
-  background: #203888;
-  -webkit-border-radius: 18;
-  -moz-border-radius: 18;
-  border-radius: 18px;
+  background: #99ddee; /*#203888;*/
+  -webkit-border-radius: 15;
+  -moz-border-radius: 15;
+  border-radius: 15px;
   font-family: Georgia;
-  color: #ffffff;
+  color: #000000; /*#ffffff;*/
   font-size: 16px;
-  padding: 5px 20px 5px 20px;
+  padding: 5px 10px 5px 10px;
   text-decoration: none;
   margin: 0;
 }
