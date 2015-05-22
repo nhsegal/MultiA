@@ -1,3 +1,5 @@
+var nodeSelected=false;
+
 var zoomIn; //The number of paths, set by the slider
 var situation = 0;  //Indicates what choice is select from the scenario drop down
 var hBarSlider;
@@ -83,40 +85,17 @@ function setup() {
   spacingSlider = createSlider(1, 20, 8);
   spacingSlider.parent("sliderPos3");
   spacingSlider.size(240);
-}
 
-function draw() {
+  
+  //from draw
   background(255);
   grid(true);
-  switch(situation){
-    case '2': //Draw mirror
-      noStroke();
-      fill(100);
-      rect(40, 370, 1000, 10);
-    break;
-
-    case '3': //Draw grating
-      noStroke();
-      fill(100);
-      rect(40, 380, 900, 10);      
-      for (var i = 0; i < paths.length; i++){
-        if (typeof paths[i][1].x != 'undefined'){
-          rect(paths[i][1].x-3, 370, 10, 10 );
-        }
-      }
-    break;
-
-    default:
-    break;
-  }
-
-  spacingSlider.mouseReleased(function(){spacing = spacingSlider.value();});
 
   //Display each nonde in each path array in the paths array
   //and connect the nodes for with lines
   for (var i = 0; i<3; i++) {
     for (var k = 0; k<pathNumber; k++){  
-      if (typeof paths[k][i] != 'undefined' && typeof paths[k] != 'undefined'){
+      if (typeof paths[k][i] != 'undefined'){
         paths[k][i].display();
       }
     }
@@ -135,12 +114,36 @@ function draw() {
   //Push an arrow with that phase into the arrows array
   //Display the arrows tip to tail
   getAction();
+
+  stroke(100);
+  line(1,1,1,height);
+  line(width-200,1,width-200,height);
+  line(width-1,1,width-1,height);
+  line(1,1,width,1);
+  line(1,height-1,width,height-1);
+  strokeWeight(2);
+}
+
+function draw() {
+  
+
+  spacingSlider.mouseReleased(function(){spacing = spacingSlider.value();});
+  if(nodeSelected) redraw();
+  //Calculate the phase associated with each path
+  //Push an arrow with that phase into the arrows array
+  //Display the arrows tip to tail
+  fill(255);
+  rect(width-200, width-1);
+  fill(0);
+  getAction();
   for (var j = 0; j < arrows.length; j++){
+    if (arrows[j].x+(arrows[j].len*cos(arrows[j]))>width-200)
     arrows[j].display();
   } 
   strokeWeight(2);
   stroke(250,0,0);
-  line(startX, startY, endX, endY);
+  if (startX<width-200) line(200, startY, endX, endY);
+  eline(startX, startY, endX, endY);
   fill(10);
 
   if (scan.length > 0){
@@ -171,13 +174,52 @@ function draw() {
       }
     }
   }
-  stroke(100);
-  line(1,1,1,height);
-  line(width-200,1,width-200,height);
-  line(width-1,1,width-1,height);
-  line(1,1,width,1);
-  line(1,height-1,width,height-1);
-  strokeWeight(2);
+}
+
+function redraw(){
+  background(255);
+  grid(true);
+  switch(situation){
+    case '2': //Draw mirror
+      noStroke();
+      fill(100);
+      rect(40, 370, 1000, 10);
+    break;
+
+    case '3': //Draw grating
+      noStroke();
+      fill(100);
+      rect(40, 380, 900, 10);      
+      for (var i = 0; i < paths.length; i++){
+        if (typeof paths[i][1].x != 'undefined'){
+          rect(paths[i][1].x-3, 370, 10, 10 );
+        }
+      }
+    break;
+
+    default:
+    break;
+  }
+
+  //Display each node in each path array in the paths array
+  //and connect the nodes for with lines
+  for (var i = 0; i<3; i++) {
+    for (var k = 0; k<pathNumber; k++){  
+      if (typeof paths[k][i] != 'undefined'){
+        paths[k][i].display();
+      }
+    }
+    if (i>0) {
+      stroke(0);
+      strokeWeight(2);
+      for (var k = 0; k<pathNumber; k++){
+        if (typeof paths[k][i] != 'undefined'){
+          line(paths[k][i].x, paths[k][i].y, paths[k][i-1].x, paths[k][i-1].y);
+        }
+      }
+    }
+  }
+ 
   
 }
 
@@ -242,10 +284,8 @@ function numCheck(){
   end2x = paths[0][2].x;
   end2y = paths[0][2].y; 
   
-  console.log("oldPathNum/2 +1: " + Math.floor(oldPathNum/2 +1 ));
-  console.log("paths.length: " + paths.length);
-  midx = paths[Math.floor(oldPathNum/2)][1].x;
-  midy = paths[Math.floor(oldPathNum/2)][1].y;
+  midx = paths[Math.floor(oldPathNum/2 +1 )][1].x;
+  midy = paths[Math.floor(oldPathNum/2 + 1)][1].y;
  
   paths.length = 0;
 
@@ -279,14 +319,13 @@ function numCheck(){
 
 function mouseClicked() {
   if (mouseButton == LEFT) {
-    console.log("MOUSECLICKED");
     for (var i =0; i < 3; i++){
-      for (var k =0; k < pathNumber; k++){
-      if (typeof paths[k][i] != 'undefined' && typeof paths[k] != 'undefined'){
+      for (var k =0; k < pathNumber; k++){        
         if (dist(mouseX, mouseY, paths[k][i].x, paths[k][i].y) < 5){
           paths[k][i].selected =  !paths[k][i].selected;
+            nodeSelected=!nodeSelected;
           for (var j = 0; j < 3; j++) {
-            for (var w = 0; w< paths.length; w++){
+            for (var w = 0; w< paths.length; w++){ //length vs. Number?
               if ((w != k) && (j != i)) {
                 paths[w][j].selected = false;
               }
@@ -294,9 +333,8 @@ function mouseClicked() {
           }
         }
       }
-      }
     }
-  }      
+  }
 }
 
 function actionArrow(x_, y_, angle_, len_){
@@ -334,12 +372,10 @@ function getSituation() {
 function getPathNum() {
   oldPathNum = pathNumber;
   var e = document.getElementById("sliderPos");
-  console.log("oldPathNum: " + oldPathNum);
-  console.log("pathNumber: " + pathNumber);
   pathNumber = e.options[e.selectedIndex].value;
-  console.log("oldPathNum: " +oldPathNum);
-  console.log("pathNumber: "+ pathNumber);
+  console.log(pathNumber);
   numCheck();
+  console.log (pathNumber);
 }
 
 function resetPaths(){
@@ -465,3 +501,4 @@ function takeScan(){
       }
     }
 }
+  
