@@ -54,21 +54,26 @@ function setup() {
   zoomIn.parent("myContainer");//("zoomin");
   zoomIn.position(1022,232);
   zoomIn.mousePressed(function(){arrowLen = arrowLen*1.1});
+  zoomIn.style("background-color", "turquoise");
 
   zoomOut = createButton('Zoom Out', 1);
   zoomOut.parent("myContainer");//("zoomout");
   zoomOut.position(1112,232);
   zoomOut.mousePressed(function(){arrowLen = arrowLen/1.1});
+  zoomOut.style("background-color", "beige");
+
 
   scan = createButton('&nbsp Scan &nbsp', 1);
   scan.parent("buttonholder2");
   //scan.position(0,178);
   scan.mousePressed(takeScan);
+  scan.style("background-color", "deepskyblue");
 
   reset = createButton('&nbsp Reset &nbsp', 1);
   reset.parent("buttonholder");
   //reset.position = (0,0);
   reset.mousePressed(resetPaths);
+  reset.style("background-color", "chartreuse");
   resetPaths();
 
   hBarSlider = createSlider(5, 20, 14);
