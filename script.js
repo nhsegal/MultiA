@@ -116,7 +116,7 @@ function draw() {
   //and connect the nodes for with lines
   for (var i = 0; i<3; i++) {
     for (var k = 0; k<pathNumber; k++){  
-      if (typeof paths[k][i] != 'undefined' && typeof paths[k] != 'undefined'){
+      if (typeof paths[k][i] != 'undefined'){
         paths[k][i].display();
       }
     }
@@ -279,10 +279,8 @@ function numCheck(){
 
 function mouseClicked() {
   if (mouseButton == LEFT) {
-    console.log("MOUSECLICKED");
     for (var i =0; i < 3; i++){
       for (var k =0; k < pathNumber; k++){
-      if (typeof paths[k][i] != 'undefined' && typeof paths[k] != 'undefined'){
         if (dist(mouseX, mouseY, paths[k][i].x, paths[k][i].y) < 5){
           paths[k][i].selected =  !paths[k][i].selected;
           for (var j = 0; j < 3; j++) {
@@ -293,7 +291,7 @@ function mouseClicked() {
             }
           }
         }
-      }
+      // }
       }
     }
   }      
