@@ -4,7 +4,7 @@
 <head>
 <title>The Path Integral Approach to QM</title>
   
-<link type="text/css" rel="stylesheet" href="style.css"/>
+<link type="text/css" rel="stylesheet" href="style.css">
   <script language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.4/p5.js"></script>
   <script language="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.4/addons/p5.dom.js"></script>
   <!--<script language="javascript" src="../addons/p5.sound.js"></script>-->
@@ -17,14 +17,11 @@
 
 <!--<h4>-->
 <p>
-The dots connected with lines mark various trajectories of a particle. In quantum mechanics, the way one calculates the probability that a particle starting at point A will be at point B a fixed time T later is by calculating the action for each possible trajectory and rotating a little vector by this action. Then one lays all the little vectors tip-to-tail. The square of the sum of these vectors is proportional to the probability that the particle will go from A to B in time T. In mathspeak: one is integrating over all possible paths from A to B, but it is a vector quantity that one is integrating. The phase of each vector in the integrand is itself the result of an integral along the path that that vector represents. 
-</p>
-<p>
+The dots connected with lines mark various trajectories of a single particle. In quantum mechanics, the way one calculates the probability that a particle starting at point <b><i>A</i></b> will be at point <b><i>B</i></b> a fixed time <i>t</i> later is by calculating the action for each possible trajectory and rotating a little vector by this action. Then one lays all the little vectors tip-to-tail. The square of the sum of these vectors is proportional to the probability that the particle will go from <b><i>A</i></b> to <b><i>B</i></b> in time <i>t</i>. In mathspeak: one integrates over all possible paths from <b><i>A</i></b> to <b><i>B</i></b>, but it is a vector quantity that one is integrating. The phase of each vector in the integrand is itself the result of an integral along the path that that vector represents. 
 On the right of the simulation one can see the vector addition of the little arrows. The resultant is in red. 
 </p>
 <p>
-Use the dropdown menu to pick a potential energy function and the slider to control the number of paths.
-Use the mouse to select the dots and adjust the trajectories. 
+Use the mouse to select the dots and adjust the trajectories. The scan button generates a graph of the relative probability of arrival <i>vs.</i> end position of the particle. 
 </p>
 <hr>
 <p>
@@ -34,18 +31,43 @@ Scenarios:
   <option value=1>Double Slit</option>
   <option value=2>Reflection</option>
   <option value=3>Diffraction Grating</option>
-
- 
 </select>
-<span id="sliderPos"> Number of paths</span>
+&nbsp;&nbsp;&nbsp;
+Number of paths<select autofocus id="sliderPos" onchange="getPathNum()">
+  <option value=1>1</option>
+  <option value=2>2</option>
+  <option value=3>3</option>
+  <option value=4>4</option>
+  <option value=5>5</option>
+  <option value=6>6</option>
+  <option value=7>7</option>
+  <option value=8 selected="selected">8</option>
+  <option value=9>9</option>
+  <option value=10>10</option>
+  <option value=11>11</option>
+  <option value=12>12</option>
+  <option value=13>13</option>
+  <option value=14>14</option>
+  <option value=15>15</option>
+  <option value=16>16</option>
+  <option value=17>17</option>
+  <option value=18>18</option>
+  <option value=19>19</option>
+  <option value=20>20</option>
+  <option value=21>21</option>
+  <option value=22>22</option>
+  <option value=23>23</option>
+  <option value=24>24</option>
+
+
+</select>
+&nbsp;
 <span id="sliderPos2"> hBar</span>
 <span id="sliderPos3" onchange="numCheck()"> spacing</span>
+<span id="buttonholder"></span>
+<span id="buttonholder2"></span>
 </p>
-<div>
-<span id= "zoomin" class= "zoom" ></span>
-<span id= "zoomout" class="zoom"></span>
-<span id = "scan"> </span>
-</div>
+
 
  <div id="myContainer"></div>
 
