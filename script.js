@@ -38,9 +38,7 @@ var scanMax = 0;
 var oldPathNum= 8;
 /*
 To do:
-    add zoom button to phase arrow side that will change arrow length
-    display numerical value of amplitude
-    change drop down menu of potentials to something else - different initial conditions like reflection, refraction, etc
+    
 */
 
 function setup() {
@@ -65,7 +63,6 @@ function setup() {
 
   scan = createButton('&nbsp Scan &nbsp', 1);
   scan.parent("buttonholder2");
-  //scan.position(0,178);
   scan.mousePressed(takeScan);
   scan.style("background-color", "deepskyblue");
 
@@ -266,7 +263,8 @@ function numCheck(){
             paths[k].push(new Node(midx - (.5*spacing/2)*(pathNumber-1)+ .5*spacing*k, 370));
           }
           else if (situation == 3){ //Grating
-               paths[k].push(new Node( (.15*width - 50 + k*5 + (Math.floor(k/3))*4*spacing)    , 370));
+               paths[k].push(new Node( (.15*width - 50 + k*5 + (Math.floor(k/4))*5*spacing)    , 370));
+               //paths[k].push(new Node( (.15*width - 50 + k*5 + (Math.floor(k/3))*4*spacing)    , 370));
           }
           else {
             paths[k].push(new Node(midx, midy - (spacing/2)*(pathNumber-1)+ spacing*k));
