@@ -75,7 +75,8 @@ function setup() {
 
   hBarSlider = createSlider(5, 20, 14);
   hBarSlider.parent("sliderPos2");
-  hBarSlider.size(240);
+  // hBarSlider.size(240);
+  hBarSlider.style("width","400px");
 
   spacingSlider = createSlider(1, 20, 8);
   spacingSlider.parent("sliderPos3");
@@ -195,29 +196,30 @@ function Node(ix, iy) {
   this.x = ix;
   this.y = iy;
   this.selected = false;
-  this.display = function() {
-    noStroke();
-    if (this.selected == false) {
-      fill(0);
-    }
-    else {
-      fill(255, 0, 0);
-      if (situation==2  && this.y == 370 && (end2x !== this.x || end1x !== this.x)){ //mirror
-        this.x =mouseX;
-      }
-      else{
-        this.x = mouseX;
-        this.y = mouseY;
-      }
-    }
-    ellipse(this.x, this.y, 8, 8);
-  }
+}
 
-  this.clickedOn = function() {
-    if (this.selected == true) {
+Node.prototype.display = function(){
+  noStroke();
+  if (this.selected == false) {
+    fill(0);
+  }
+  else {
+    fill(255, 0, 0);
+    if (situation==2  && this.y == 370 && (end2x !== this.x || end1x !== this.x)){ //mirror
+      this.x =mouseX;
+    }
+    else{
       this.x = mouseX;
       this.y = mouseY;
     }
+  }
+  ellipse(this.x, this.y, 8, 8);
+}
+
+Node.protype.clickedOn = function() {
+  if (this.selected == true) {
+    this.x = mouseX;
+   this.y = mouseY;
   }
 }
 
